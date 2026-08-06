@@ -9,6 +9,15 @@
 
 typedef enum { TYPE_INT, TYPE_FLOAT, TYPE_STRING } Type;
 
+typedef enum {
+  STORE_OK,
+  STORE_FULL,
+  STORE_UNDEFINED,
+  STORE_NOT_FOUND
+} StoreResult;
+
+typedef enum { SLOT_EMPTY, SLOT_OCCUPIED, SLOT_DELETED } SlotState;
+
 typedef union {
   int i;
   float f;
@@ -21,17 +30,79 @@ typedef struct {
   Value value;
 } Variable;
 
+typedef struct {
+  Variable* arr;
+  size_t count;
+} Store;
+
+uint64_t hash_string(const char* s) {
+  uint64_t hash = 14695981039346656037ULL;
+
+  while (*s) {
+    hash ^= (unsigned char)*s++;
+    hash *= 1099511628211ULL;
+  }
+
+  return hash;
+}
+
+StoreResult store_set(Store* store, Variable var) {
+  if (!store) {
+    return STORE_UNDEFINED;
+  }
+
+  if (store->count >= STORE_SIZE) {
+    return STORE_FULL;
+  }
+
+  size_t index = hash_string(var.key) % STORE_SIZE;
+
+  // if trying to write to key 'foo' which already exists
+  if (store->arr[index].key && strcmp(store->arr[index].key, var.key) == 0) {
+    store->arr[index] = var;
+    return STORE_OK;
+  }
+
+  while (store->arr[index].key != NULL) {
+    index = (index + 1) % STORE_SIZE;
+  }
+
+  store->arr[index] = var;
+  store->count++;
+
+  return STORE_OK;
+}
+
+StoreResult store_get(Store* store, const char* key, Variable* var) {
+  if (!store) {
+    return STORE_UNDEFINED;
+  }
+
+  size_t index = hash_string(key) % STORE_SIZE;
+
+  while (store->arr[index].key != NULL) {
+    if (strcmp(store->arr[index].key, key) == 0) {
+      *var = store->arr[index];
+      return STORE_OK;
+    }
+
+    index = (index + 1) % STORE_SIZE;
+  }
+
+  return STORE_NOT_FOUND;
+}
+
 char* type_to_string(Type t) {
   switch (t) {
-    case TYPE_INT:
-      return "TYPE_INT";
-      break;
-    case TYPE_FLOAT:
-      return "TYPE_FLOAT";
-      break;
-    case TYPE_STRING:
-      return "TYPE_STRING";
-      break;
+  case TYPE_INT:
+    return "TYPE_INT";
+    break;
+  case TYPE_FLOAT:
+    return "TYPE_FLOAT";
+    break;
+  case TYPE_STRING:
+    return "TYPE_STRING";
+    break;
   }
   return "";
 }
@@ -42,8 +113,9 @@ int main() {
   char* line = NULL;
   size_t cap = 0;
 
-  Variable store[STORE_SIZE];
-  size_t stored = 0;
+  Variable arr[STORE_SIZE] = {0};
+
+  Store store = {.arr = arr, .count = 0};
 
   while (getline(&line, &cap, stdin) != -1) {
     char* cmd = strtok(line, " \t\r\n");
@@ -67,7 +139,7 @@ int main() {
         continue;
       }
 
-      if (stored >= STORE_SIZE) {
+      if (store.count >= STORE_SIZE) {
         printf("ERROR: store full.\n");
         continue;
       }
@@ -140,8 +212,8 @@ int main() {
       // printf("value: %s\n", value);
       // printf("type: %s\n", type_to_string(v.type));
 
-      store[stored] = v;
-      stored++;
+      store.arr[store.count] = v;
+      store.count++;
     } else if (strcmp(cmd, "get") == 0) {
       char* key = strtok(NULL, " \t\r\n");
 
@@ -151,31 +223,31 @@ int main() {
       }
 
       size_t i = 0;
-      for (; i < stored; ++i) {
-        if (strcmp(key, store[i].key) == 0) {
+      for (; i < store.count; ++i) {
+        if (strcmp(key, store.arr[i].key) == 0) {
           break;
         }
       }
 
-      if (i == stored) {
+      if (i == store.count) {
         printf("ERROR: no key found in store.\n");
         continue;
       }
 
-      Variable v = store[i];
+      Variable v = store.arr[i];
 
       printf("key: %s\n", key);
       printf("type: %s\n", type_to_string(v.type));
       switch (v.type) {
-        case TYPE_INT:
-          printf("value: %d\n", v.value.i);
-          break;
-        case TYPE_FLOAT:
-          printf("value: %f\n", v.value.f);
-          break;
-        case TYPE_STRING:
-          printf("value: %s\n", v.value.s);
-          break;
+      case TYPE_INT:
+        printf("value: %d\n", v.value.i);
+        break;
+      case TYPE_FLOAT:
+        printf("value: %f\n", v.value.f);
+        break;
+      case TYPE_STRING:
+        printf("value: %s\n", v.value.s);
+        break;
       }
     } else {
       char* cmd_to_help = strtok(NULL, " \t\r\n");
