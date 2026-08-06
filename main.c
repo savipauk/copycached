@@ -13,9 +13,11 @@ typedef enum {
   STORE_OK,
   STORE_FULL,
   STORE_UNDEFINED,
-  STORE_NOT_FOUND
+  STORE_NOT_FOUND,
+  STORE_NOMEM
 } StoreResult;
 
+// TODO
 typedef enum { SLOT_EMPTY, SLOT_OCCUPIED, SLOT_DELETED } SlotState;
 
 typedef union {
@@ -35,6 +37,32 @@ typedef struct {
   size_t count;
 } Store;
 
+void variable_free(Variable* v) {
+  free(v->key);
+  if (v->type == TYPE_STRING) {
+    free(v->value.s);
+  }
+}
+
+int variable_copy(const Variable* src, Variable* dst) {
+  *dst = *src;
+
+  dst->key = strdup(src->key);
+  if (!dst->key) {
+    return -1;
+  }
+
+  if (src->type == TYPE_STRING) {
+    dst->value.s = strdup(src->value.s);
+    if (!dst->value.s) {
+      free(dst->key);
+      return -1;
+    }
+  }
+
+  return 0;
+}
+
 uint64_t hash_string(const char* s) {
   uint64_t hash = 14695981039346656037ULL;
 
@@ -51,20 +79,22 @@ StoreResult store_set(Store* store, Variable var) {
     return STORE_UNDEFINED;
   }
 
-  if (store->count >= STORE_SIZE) {
-    return STORE_FULL;
-  }
-
   size_t index = hash_string(var.key) % STORE_SIZE;
 
-  // if trying to write to key 'foo' which already exists
-  if (store->arr[index].key && strcmp(store->arr[index].key, var.key) == 0) {
-    store->arr[index] = var;
-    return STORE_OK;
-  }
-
+  size_t i = 0;
   while (store->arr[index].key != NULL) {
+    if (i == STORE_SIZE) {
+      return STORE_FULL;
+    }
+
+    // if trying to write to key 'foo' which already exists
+    if (strcmp(store->arr[index].key, var.key) == 0) {
+      variable_free(&store->arr[index]);
+      store->arr[index] = var;
+      return STORE_OK;
+    }
     index = (index + 1) % STORE_SIZE;
+    i++;
   }
 
   store->arr[index] = var;
@@ -73,6 +103,8 @@ StoreResult store_set(Store* store, Variable var) {
   return STORE_OK;
 }
 
+// On STORE_OK, *var is a deep copy owned by the caller. Release it with
+// variable_free().
 StoreResult store_get(Store* store, const char* key, Variable* var) {
   if (!store) {
     return STORE_UNDEFINED;
@@ -82,7 +114,9 @@ StoreResult store_get(Store* store, const char* key, Variable* var) {
 
   while (store->arr[index].key != NULL) {
     if (strcmp(store->arr[index].key, key) == 0) {
-      *var = store->arr[index];
+      if (variable_copy(&store->arr[index], var) != 0) {
+        return STORE_NOMEM;
+      }
       return STORE_OK;
     }
 
@@ -96,20 +130,15 @@ char* type_to_string(Type t) {
   switch (t) {
   case TYPE_INT:
     return "TYPE_INT";
-    break;
   case TYPE_FLOAT:
     return "TYPE_FLOAT";
-    break;
   case TYPE_STRING:
     return "TYPE_STRING";
-    break;
   }
   return "";
 }
 
 int main() {
-  uint32_t running = 1;
-
   char* line = NULL;
   size_t cap = 0;
 
@@ -131,19 +160,14 @@ int main() {
         continue;
       }
 
-      char* value = strtok(NULL, " \r\n");
+      char* value = strtok(NULL, " \t\r\n");
 
       if (!value) {
         printf("ERROR: set missing value.\n");
         continue;
       }
 
-      if (store.count >= STORE_SIZE) {
-        printf("ERROR: store full.\n");
-        continue;
-      }
-
-      char* type = strtok(NULL, "\r\n");
+      char* type = strtok(NULL, " \t\r\n");
 
       Variable v;
       v.key = strdup(key);
@@ -159,10 +183,12 @@ int main() {
 
           if (errno == ERANGE || *end != '\0' || end == value || n < INT_MIN ||
               n > INT_MAX) {
-            printf("Invalid integer: %s\n", value);
+            printf("Invalid integer: %s. Saved as string instead.\n", value);
+            v.type = TYPE_STRING;
+            v.value.s = strdup(value);
           } else {
             v.value.i = (int)n;
-            printf("Parsed int: %d\n", (int)n);
+            printf("Parsed int: %d.\n", (int)n);
           }
         } else if (strcmp(type, "float") == 0) {
           // try to cast to float, print error if fail
@@ -174,12 +200,14 @@ int main() {
           float f = strtof(value, &end);
 
           if (errno == ERANGE || *end != '\0' || end == value) {
-            printf("Invalid float: %s\n", value);
+            printf("Invalid float: %s. Saved as string instead.\n", value);
+            v.type = TYPE_STRING;
+            v.value.s = strdup(value);
           } else {
             v.value.f = f;
-            printf("Parsed float: %f\n", f);
+            printf("Parsed float: %f.\n", f);
           }
-        } else if (strcmp(type, "string") == 0) {
+        } else /* if (strcmp(type, "string") == 0) */ {
           v.type = TYPE_STRING;
           v.value.s = strdup(value);
         }
@@ -207,11 +235,10 @@ int main() {
         }
       }
 
-      // printf("key: %s\n", key);
-      // printf("value: %s\n", value);
-      // printf("type: %s\n", type_to_string(v.type));
-
       StoreResult result = store_set(&store, v);
+      if (result != STORE_OK) {
+        variable_free(&v);
+      }
       switch (result) {
       case STORE_OK:
         break;
@@ -221,7 +248,6 @@ int main() {
       case STORE_UNDEFINED:
         printf("ERROR: store not defined.\n");
         continue;
-      case STORE_NOT_FOUND:
       default:
         printf("ERROR: store_set error.\n");
         continue;
@@ -230,16 +256,15 @@ int main() {
       char* key = strtok(NULL, " \t\r\n");
 
       if (!key) {
-        printf("ERROR: set missing key.\n");
+        printf("ERROR: get missing key.\n");
         continue;
       }
 
       Variable v;
       StoreResult result = store_get(&store, key, &v);
+
       switch (result) {
       case STORE_OK:
-        break;
-      case STORE_FULL:
         break;
       case STORE_UNDEFINED:
         printf("ERROR: store not defined.\n");
@@ -247,8 +272,11 @@ int main() {
       case STORE_NOT_FOUND:
         printf("ERROR: no key found in store.\n");
         continue;
+      case STORE_NOMEM:
+        printf("ERROR: out of memory.\n");
+        continue;
       default:
-        printf("ERROR: store_set error.\n");
+        printf("ERROR: store_get error.\n");
         continue;
       }
 
@@ -265,6 +293,8 @@ int main() {
         printf("value: %s\n", v.value.s);
         break;
       }
+
+      variable_free(&v);
     } else {
       char* cmd_to_help = strtok(NULL, " \t\r\n");
 
@@ -285,6 +315,11 @@ int main() {
     }
   }
 
+  for (size_t i = 0; i < STORE_SIZE; i++) {
+    if (arr[i].key) {
+      variable_free(&arr[i]);
+    }
+  }
   free(line);
 
   return 0;
