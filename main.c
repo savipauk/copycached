@@ -114,7 +114,6 @@ int main() {
   size_t cap = 0;
 
   Variable arr[STORE_SIZE] = {0};
-
   Store store = {.arr = arr, .count = 0};
 
   while (getline(&line, &cap, stdin) != -1) {
@@ -212,8 +211,21 @@ int main() {
       // printf("value: %s\n", value);
       // printf("type: %s\n", type_to_string(v.type));
 
-      store.arr[store.count] = v;
-      store.count++;
+      StoreResult result = store_set(&store, v);
+      switch (result) {
+      case STORE_OK:
+        break;
+      case STORE_FULL:
+        printf("ERROR: store full.\n");
+        continue;
+      case STORE_UNDEFINED:
+        printf("ERROR: store not defined.\n");
+        continue;
+      case STORE_NOT_FOUND:
+      default:
+        printf("ERROR: store_set error.\n");
+        continue;
+      }
     } else if (strcmp(cmd, "get") == 0) {
       char* key = strtok(NULL, " \t\r\n");
 
@@ -222,19 +234,23 @@ int main() {
         continue;
       }
 
-      size_t i = 0;
-      for (; i < store.count; ++i) {
-        if (strcmp(key, store.arr[i].key) == 0) {
-          break;
-        }
-      }
-
-      if (i == store.count) {
+      Variable v;
+      StoreResult result = store_get(&store, key, &v);
+      switch (result) {
+      case STORE_OK:
+        break;
+      case STORE_FULL:
+        break;
+      case STORE_UNDEFINED:
+        printf("ERROR: store not defined.\n");
+        continue;
+      case STORE_NOT_FOUND:
         printf("ERROR: no key found in store.\n");
         continue;
+      default:
+        printf("ERROR: store_set error.\n");
+        continue;
       }
-
-      Variable v = store.arr[i];
 
       printf("key: %s\n", key);
       printf("type: %s\n", type_to_string(v.type));
