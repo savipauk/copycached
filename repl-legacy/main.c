@@ -17,9 +17,6 @@ typedef enum {
   STORE_NOMEM
 } StoreResult;
 
-// TODO
-typedef enum { SLOT_EMPTY, SLOT_OCCUPIED, SLOT_DELETED } SlotState;
-
 typedef union {
   int i;
   float f;
