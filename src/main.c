@@ -1,17 +1,16 @@
+#include "store.h"
 #include <errno.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "store.h"
 
 int main() {
   char* line = NULL;
   size_t cap = 0;
 
-  Variable arr[STORE_SIZE] = {0};
-  Store store = {.arr = arr, .count = 0};
+  Store store = store_init();
 
   while (getline(&line, &cap, stdin) != -1) {
     char* cmd = strtok(line, " \t\r\n");
@@ -163,6 +162,31 @@ int main() {
       }
 
       variable_free(&v);
+    } else if (strcmp(cmd, "del") == 0) {
+      char* key = strtok(NULL, " \t\r\n");
+
+      if (!key) {
+        printf("ERROR: get missing key.\n");
+        continue;
+      }
+
+      StoreResult result = store_delete(&store, key);
+
+      switch (result) {
+      case STORE_OK:
+        break;
+      case STORE_UNDEFINED:
+        printf("ERROR: store not defined.\n");
+        continue;
+      case STORE_NOT_FOUND:
+        printf("ERROR: no key found in store.\n");
+        continue;
+      default:
+        printf("ERROR: store_get error.\n");
+        continue;
+      }
+
+      printf("Successfully deleted %s from the store.\n", key);
     } else {
       char* cmd_to_help = strtok(NULL, " \t\r\n");
 
@@ -170,6 +194,7 @@ int main() {
         printf("help <command>\n");
         printf("set <key> <value> <optional: type>\n");
         printf("get <key>\n");
+        printf("del <key>\n");
         continue;
       }
 
@@ -177,17 +202,15 @@ int main() {
         printf("set <key> <value> <optional: type>\n");
       } else if (strcmp(cmd_to_help, "get") == 0) {
         printf("get <key>\n");
+      } else if (strcmp(cmd_to_help, "del") == 0) {
+        printf("del <key>\n");
       } else {
         printf("help <command>\n");
       }
     }
   }
 
-  for (size_t i = 0; i < STORE_SIZE; i++) {
-    if (arr[i].key) {
-      variable_free(&arr[i]);
-    }
-  }
+  store_cleanup(&store);
   free(line);
 
   return 0;
