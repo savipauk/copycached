@@ -8,7 +8,7 @@ ParserResult parser_feed(Parser* parser, const char* data, size_t len) {
     return PARSER_INVALID;
   }
 
-  size_t required = parser->len + len;
+  size_t required = parser->len + len + 1;
 
   if (required > parser->capacity) {
     size_t capacity = parser->capacity ? parser->capacity : 64;
@@ -39,6 +39,10 @@ ParserResult parser_parse(Parser* parser) {
   }
 
   char* cmd_name = strtok(parser->data, " \t\r\n");
+
+  if (!cmd_name) {
+    cmd_name = "help";
+  }
 
   const Command* cmd = command_find(cmd_name);
 
