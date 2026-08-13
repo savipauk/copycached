@@ -136,7 +136,7 @@ StoreResult store_delete(Store* store, const char* key) {
   slot->var = (Variable){0};
   slot->state = SLOT_DELETED;
   store->count--;
-  store->deleted--;
+  store->deleted++;
 
   return STORE_OK;
 }

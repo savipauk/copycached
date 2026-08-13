@@ -1,8 +1,7 @@
 #include "command.h"
 
 /*
-set <key> <flags> <exptime> <bytes size>\r\n
-<data block>\r\n
+set <key> <flags> <exptime> <bytes size>\r\n<data block>\r\n
 → STORED\r\n
 */
 
@@ -59,5 +58,5 @@ static const Command commands[] = {
      .args = set_args,
      .arg_count = sizeof(set_args) / sizeof(set_args[0]),
      .handle = set_handle,
-     .help = "set <key> <value> <optional: type>"},
+     .help = "set <key> <flags> <exptime> <bytes size>\r\n<data block>\r\n"},
 };
