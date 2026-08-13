@@ -1,19 +1,23 @@
+#include "store.h"
 #include <stddef.h>
-/*
 
-set <key> <flags> <exptime> <bytes>\r\n
-<data block>\r\n
-→ STORED\r\n
+typedef enum {
+  ARGS_KEY,
+  ARGS_FLAGS,
+  ARGS_EXPTIME,
+  ARGS_LENGTH,
+  ARGS_BYTES,
+  ARGS_CMD
+} ArgumentName;
 
-get <key>\r\n
-→ VALUE <key> <flags> <bytes>\r\n
-  <data block>\r\n
-  END\r\n
-
-*/
-
-typedef enum { ARGS_KEY, ARGS_FLAGS, ARGS_EXPTIME, ARGS_LENGTH, ARGS_BYTES, ARGS_CMD } ArgumentName;
 typedef enum { ARGS_REQUIRED, ARGS_OPTIONAL } ArgumentType;
+
+typedef enum {
+  COMMAND_OK,
+  COMMAND_ERROR,
+  COMMAND_NOMEM,
+  COMMAND_INVALID
+} CommandResult;
 
 typedef struct {
   const ArgumentName name;
@@ -21,7 +25,8 @@ typedef struct {
   const char* arg;
 } Argument;
 
-typedef void* (*command_handle)(Argument* args, size_t arg_count);
+typedef CommandResult (*command_handle)(Store* store, Argument* args,
+                                        size_t arg_count);
 
 typedef struct {
   const char* name;
@@ -31,3 +36,6 @@ typedef struct {
   command_handle handle;
   const char* help;
 } Command;
+
+const char* command_get_arg(Argument* args, size_t arg_count,
+                            ArgumentName name);
