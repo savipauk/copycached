@@ -22,8 +22,8 @@ typedef struct {
 
 ParserResult parser_feed(Parser* parser, const char* data, size_t len);
 
-ParserResult parser_parse(Parser* parser);
+ParserResult parser_parse(Parser* parser, Command** cmd);
 
-ParserResult parser_parse_argument(Parser* parser, const Argument* arg);
+ParserResult parser_parse_argument(Parser* parser, Argument* arg);
 
 #endif

@@ -33,7 +33,7 @@ ParserResult parser_feed(Parser* parser, const char* data, size_t len) {
   return PARSER_OK;
 }
 
-ParserResult parser_parse(Parser* parser) {
+ParserResult parser_parse(Parser* parser, Command** cmd) {
   if (!parser->data || parser->len == 0) {
     return PARSER_INCOMPLETE;
   }
@@ -44,14 +44,15 @@ ParserResult parser_parse(Parser* parser) {
     cmd_name = "help";
   }
 
-  const Command* cmd = command_find(cmd_name);
+  *cmd = command_find(cmd_name);
 
   if (!cmd) {
     return PARSER_INVALID;
   }
 
-  for (size_t i = 0; i < cmd->arg_count; ++i) {
-    ParserResult argument_parse = parser_parse_argument(parser, &cmd->args[i]);
+  for (size_t i = 0; i < (*cmd)->arg_count; ++i) {
+    ParserResult argument_parse =
+        parser_parse_argument(parser, &(*cmd)->args[i]);
 
     if (argument_parse != PARSER_OK) {
       return argument_parse;
@@ -63,12 +64,15 @@ ParserResult parser_parse(Parser* parser) {
   return PARSER_OK;
 }
 
-ParserResult parser_parse_argument(Parser* parser, const Argument* arg) {
+ParserResult parser_parse_argument(Parser* parser, Argument* arg) {
+  (void)parser;
   char* arg_arg = strtok(NULL, " \t\r\n");
 
   if (!arg_arg) {
     return PARSER_INCOMPLETE;
   }
+
+  arg->arg = arg_arg;
 
   switch (arg->name) {
   case ARGS_KEY:

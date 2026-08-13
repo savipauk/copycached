@@ -7,6 +7,24 @@
 #include <stdlib.h>
 #include <string.h>
 
+int switch_result(ParserResult result) {
+  switch (result) {
+  case PARSER_OK:
+    return 0;
+  case PARSER_INCOMPLETE:
+    printf("parser incomplete\n");
+    break;
+  case PARSER_INVALID:
+    printf("parser invalid\n");
+    break;
+  case PARSER_NOMEM:
+    printf("parser nomem\n");
+    break;
+  }
+
+  return -1;
+}
+
 int main() {
   char* line = NULL;
   size_t cap = 0;
@@ -16,8 +34,21 @@ int main() {
   Parser parser = {0};
 
   while ((nread = getline(&line, &cap, stdin)) != -1) {
-    parser_feed(&parser, line, (size_t)nread);
-    parser_parse(&parser);
+    ParserResult result;
+    result = parser_feed(&parser, line, (size_t)nread);
+    if (switch_result(result) == -1) {
+      break;
+    }
+
+    Command* cmd;
+    result = parser_parse(&parser, &cmd);
+    if (switch_result(result) == -1) {
+      printf("parse\n");
+      break;
+    }
+
+    VariableEntry var = {0};
+    cmd->handle(&store, cmd->args, cmd->arg_count, NULL);
   }
 
   store_cleanup(&store);

@@ -34,7 +34,7 @@ typedef CommandResult (*command_handle)(Store* store, Argument* args,
 
 typedef struct {
   const char* name;
-  const Argument* args;
+  Argument* args;
   size_t arg_count;
 
   command_handle handle;
@@ -43,6 +43,8 @@ typedef struct {
 
 const char* command_get_arg(Argument* args, size_t arg_count,
                             ArgumentName name);
+
+Command* command_find(const char* name);
 
 static inline CommandResult command_ok() {
   return (CommandResult){
@@ -64,8 +66,5 @@ static inline CommandResult command_invalid(const char* err) {
       .err = err,
   };
 }
-
-const Command* command_find(const char* name);
-
 
 #endif
