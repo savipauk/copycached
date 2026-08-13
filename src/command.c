@@ -49,6 +49,7 @@ CommandResult set_handle(Store* store, Argument* args, size_t arg_count,
     return command_invalid("missing bytes");
   }
 
+  // TODO: actually store the variable
   // StoreResult result = store_set(store, var);
   // switch (result) {
   // }
@@ -65,7 +66,7 @@ static Command commands[] = {
 };
 
 Command* command_find(const char* name) {
-  for (size_t i = 0; i < sizeof(commands) / sizeof(Command); ++i) {
+  for (size_t i = 0; i < sizeof(commands) / sizeof(commands[0]); ++i) {
     if (strcmp(name, commands[i].name) == 0) {
       return &commands[i];
     }

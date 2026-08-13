@@ -32,6 +32,7 @@ int main() {
 
   Store store = store_init();
   Parser parser = {0};
+  parser.mode = PARSER_REPL;
 
   while ((nread = getline(&line, &cap, stdin)) != -1) {
     ParserResult result;
@@ -43,12 +44,15 @@ int main() {
     Command* cmd;
     result = parser_parse(&parser, &cmd);
     if (switch_result(result) == -1) {
-      printf("parse\n");
-      break;
+      printf("parse error\n");
     }
 
     VariableEntry var = {0};
-    cmd->handle(&store, cmd->args, cmd->arg_count, NULL);
+    CommandResult cmd_result =
+        cmd->handle(&store, cmd->args, cmd->arg_count, NULL);
+    if (cmd_result.type != COMMAND_OK) {
+      printf("%s\n", cmd_result.err);
+    }
   }
 
   store_cleanup(&store);
