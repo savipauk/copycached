@@ -7,16 +7,17 @@ typedef enum {
   ARGS_EXPTIME,
   ARGS_LENGTH,
   ARGS_BYTES,
+  ARGS_DATA,
   ARGS_CMD
 } ArgumentName;
 
 typedef enum { ARGS_REQUIRED, ARGS_OPTIONAL } ArgumentType;
 
-typedef enum {
-  COMMAND_OK,
-  COMMAND_ERROR,
-  COMMAND_NOMEM,
-  COMMAND_INVALID
+typedef enum { COMMAND_OK, COMMAND_ERROR, COMMAND_INVALID } Status;
+
+typedef struct {
+  Status type;
+  const char* err;
 } CommandResult;
 
 typedef struct {
@@ -26,7 +27,7 @@ typedef struct {
 } Argument;
 
 typedef CommandResult (*command_handle)(Store* store, Argument* args,
-                                        size_t arg_count);
+                                        size_t arg_count, VariableEntry* var);
 
 typedef struct {
   const char* name;
@@ -39,3 +40,24 @@ typedef struct {
 
 const char* command_get_arg(Argument* args, size_t arg_count,
                             ArgumentName name);
+
+static inline CommandResult command_ok() {
+  return (CommandResult){
+      .type = COMMAND_OK,
+      .err = NULL,
+  };
+}
+
+static inline CommandResult command_error(const char* err) {
+  return (CommandResult){
+      .type = COMMAND_ERROR,
+      .err = err,
+  };
+}
+
+static inline CommandResult command_invalid(const char* err) {
+  return (CommandResult){
+      .type = COMMAND_INVALID,
+      .err = err,
+  };
+}

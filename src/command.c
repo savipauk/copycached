@@ -1,7 +1,7 @@
 #include "command.h"
 
 /*
-set <key> <flags> <exptime> <bytes>\r\n
+set <key> <flags> <exptime> <bytes size>\r\n
 <data block>\r\n
 → STORED\r\n
 */
@@ -22,24 +22,36 @@ Argument set_args[] = {
     {.name = ARGS_FLAGS, .type = ARGS_OPTIONAL, .arg = "flags"},
     {.name = ARGS_EXPTIME, .type = ARGS_OPTIONAL, .arg = "exptime"},
     {.name = ARGS_BYTES, .type = ARGS_REQUIRED, .arg = "bytes"},
+    {.name = ARGS_DATA, .type = ARGS_REQUIRED, .arg = "data"},
 };
 
 Argument get_args[] = {
     {.name = ARGS_KEY, .type = ARGS_REQUIRED, .arg = "key"},
 };
 
-CommandResult set_handle(Store* store, Argument* args, size_t arg_count) {
-  // args must have set_args
+CommandResult set_handle(Store* store, Argument* args, size_t arg_count,
+                         VariableEntry* var) {
+  (void)var;
   const char* key = command_get_arg(args, arg_count, ARGS_KEY);
   const char* flags = command_get_arg(args, arg_count, ARGS_FLAGS);
   const char* exptime = command_get_arg(args, arg_count, ARGS_EXPTIME);
   const char* bytes = command_get_arg(args, arg_count, ARGS_BYTES);
+  const uint8_t* string_data =
+      (const uint8_t*)command_get_arg(args, arg_count, ARGS_DATA);
 
   if (!key) {
-    return COMMAND_ERROR;
+    return command_invalid("missing key");
   }
 
-  return COMMAND_OK;
+  if (!bytes) {
+    return command_invalid("missing bytes");
+  }
+
+  // StoreResult result = store_set(store, var);
+  // switch (result) {
+  // }
+
+  return command_ok();
 }
 
 static const Command commands[] = {

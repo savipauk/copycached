@@ -28,6 +28,13 @@ typedef struct {
   Value value;
 } Variable;
 
+// TODO: the new stored variable
+typedef struct {
+  char* key;
+  uint8_t* data;
+  size_t size;
+} VariableEntry;
+
 typedef struct {
   SlotState state;
   Variable var;
