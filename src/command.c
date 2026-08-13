@@ -1,4 +1,5 @@
 #include "command.h"
+#include <string.h>
 
 /*
 set <key> <flags> <exptime> <bytes size>\r\n<data block>\r\n
@@ -60,3 +61,14 @@ static const Command commands[] = {
      .handle = set_handle,
      .help = "set <key> <flags> <exptime> <bytes size>\r\n<data block>\r\n"},
 };
+
+const Command* command_find(const char* name) {
+  for (size_t i = 0; i < sizeof(commands) / sizeof(Command); ++i) {
+    if (strcmp(name, commands[i].name) == 0) {
+      return &commands[i];
+    }
+  }
+
+  return NULL;
+}
+

@@ -1,3 +1,6 @@
+#ifndef COMMAND_H
+#define COMMAND_H
+
 #include "store.h"
 #include <stddef.h>
 
@@ -61,3 +64,8 @@ static inline CommandResult command_invalid(const char* err) {
       .err = err,
   };
 }
+
+const Command* command_find(const char* name);
+
+
+#endif

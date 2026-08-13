@@ -1,3 +1,4 @@
+#include "parser.h"
 #include "store.h"
 #include <errno.h>
 #include <limits.h>
@@ -7,6 +8,26 @@
 #include <string.h>
 
 int main() {
+  char* line = NULL;
+  size_t cap = 0;
+  ssize_t nread;
+
+  Store store = store_init();
+  Parser parser = {0};
+
+  while ((nread = getline(&line, &cap, stdin)) != -1) {
+    parser_feed(&parser, line, (size_t)nread);
+    parser_parse(&parser);
+  }
+
+  store_cleanup(&store);
+  free(parser.data);
+  free(line);
+
+  return 0;
+}
+
+int old_main() {
   char* line = NULL;
   size_t cap = 0;
 

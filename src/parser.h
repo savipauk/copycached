@@ -1,6 +1,29 @@
+#ifndef PARSER_H
+#define PARSER_H
+
 #include "command.h"
 
-void parse_line(char* line);
+typedef enum { PARSER_REPL, PARSER_TCP } ParserMode;
 
-void parse_command(Command* cmd);
+typedef enum {
+  PARSER_OK,
+  PARSER_INCOMPLETE,
+  PARSER_INVALID,
+  PARSER_NOMEM
+} ParserResult;
 
+typedef struct {
+  ParserMode mode;
+
+  char* data;
+  size_t len;
+  size_t capacity;
+} Parser;
+
+ParserResult parser_feed(Parser* parser, const char* data, size_t len);
+
+ParserResult parser_parse(Parser* parser);
+
+ParserResult parser_parse_argument(Parser* parser, const Argument* arg);
+
+#endif

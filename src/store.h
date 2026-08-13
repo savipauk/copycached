@@ -1,3 +1,6 @@
+#ifndef STORE_H
+#define STORE_H
+
 #include <stddef.h>
 #include <stdint.h>
 #define STORE_SIZE 128
@@ -70,3 +73,5 @@ Store store_init();
 void store_cleanup(Store* store);
 
 char* type_to_string(Type t);
+
+#endif
