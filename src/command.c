@@ -3,11 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*
-set <key> <flags> <bytes size>\r\n<data block>\r\n
-→ STORED\r\n
-*/
-
 const char* command_get_arg(Argument* args, size_t arg_count,
                             ArgumentName name) {
   for (size_t i = 0; i < arg_count; ++i) {

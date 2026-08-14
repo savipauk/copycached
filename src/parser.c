@@ -3,6 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*
+expect:
+set <key> <flags> <bytes size> <data block>\r\n
+→ STORED
+read bytes-size from data block and expect \r\n
+*/
+
 ParserResult parser_feed(Parser* parser, const char* data, size_t len) {
   if (len == 0) {
     return PARSER_INVALID;
