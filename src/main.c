@@ -20,6 +20,9 @@ int switch_result(ParserResult result) {
   case PARSER_NOMEM:
     printf("parser nomem\n");
     break;
+  default:
+    printf("unknown parser error\n");
+    break;
   }
 
   return -1;

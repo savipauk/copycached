@@ -63,13 +63,22 @@ ParserResult parser_parse(Parser* parser, Command** cmd) {
     (*cmd)->args[i].arg = NULL;
   }
 
+  position = strlen((*cmd)->name) + 1;
+
   for (size_t i = 0; i < (*cmd)->arg_count; ++i) {
     ParserResult argument_parse =
         parser_parse_argument(parser, &(*cmd)->args[i]);
 
-    if (argument_parse != PARSER_OK) {
+    switch (argument_parse) {
+    case PARSER_INCOMPLETE:
+    case PARSER_INVALID:
+    case PARSER_NOMEM:
       parser->len = 0;
       return argument_parse;
+    case PARSER_WHITESPACE:
+      continue;
+    case PARSER_OK:
+      continue;
     }
   }
 
@@ -80,7 +89,22 @@ ParserResult parser_parse(Parser* parser, Command** cmd) {
 
 ParserResult parser_parse_argument(Parser* parser, Argument* arg) {
   (void)parser;
-  char* arg_arg = strtok(NULL, " \t\r\n");
+
+  ParserResult next_res = parser_parse_next(parser, 0);
+
+  switch (next_res) {
+  case PARSER_INCOMPLETE:
+  case PARSER_INVALID:
+  case PARSER_NOMEM:
+  case PARSER_WHITESPACE:
+    return next_res;
+  case PARSER_OK:
+    break;
+  }
+
+  printf("parser_parse_next -> %s\n", constructed_string);
+
+  char* arg_arg = constructed_string;
 
   if (!arg_arg) {
     if (arg->type == ARGS_REQUIRED) {
@@ -119,4 +143,43 @@ ParserResult parser_parse_argument(Parser* parser, Argument* arg) {
   printf("%s\n", arg_arg);
 
   return PARSER_OK;
+}
+
+ParserResult parser_parse_next(Parser* parser, size_t count) {
+  if (parser->len <= position) {
+    return PARSER_INCOMPLETE;
+  }
+
+  char read = parser->data[position];
+  printf("read char %d at pos %zu\n", read, position);
+
+  switch (read) {
+  case ' ':
+  case '\t':
+  case '\r':
+    printf("encountered whitespace\n");
+    position++;
+    return PARSER_WHITESPACE;
+  default:
+    break;
+  }
+
+  if (!constructed_string) {
+    constructed_string = malloc(1);
+    if (!constructed_string) {
+      return PARSER_NOMEM;
+    }
+  } else {
+    char* tmp = realloc(constructed_string, count + 1);
+    if (!tmp) {
+      return PARSER_NOMEM;
+    }
+
+    constructed_string = tmp;
+  }
+
+  constructed_string[count] = read;
+  position++;
+
+  return parser_parse_next(parser, count++);
 }

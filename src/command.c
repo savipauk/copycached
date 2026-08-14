@@ -41,9 +41,8 @@ CommandResult set_handle(Store* store, Argument* args, size_t arg_count,
   const char* key = command_get_arg(args, arg_count, ARGS_KEY);
   const char* flags = command_get_arg(args, arg_count, ARGS_FLAGS);
   const char* bytes = command_get_arg(args, arg_count, ARGS_BYTES);
-  const char* string_data = command_get_arg(args, arg_count, ARGS_DATA);
-  // const uint8_t* string_data =
-  //     (const uint8_t*)command_get_arg(args, arg_count, ARGS_DATA);
+  const uint8_t* string_data =
+      (const uint8_t*)command_get_arg(args, arg_count, ARGS_DATA);
 
   if (!key) {
     return command_invalid("missing key");
