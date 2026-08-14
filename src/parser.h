@@ -27,9 +27,10 @@ ParserResult parser_parse(Parser* parser, Command** cmd);
 
 ParserResult parser_parse_argument(Parser* parser, Argument* arg);
 
-ParserResult parser_parse_next(Parser* parser, size_t count);
+ParserResult parser_parse_next(Parser* parser);
 
 static char* constructed_string = NULL;
+static size_t count = 0;
 static size_t position = 0;
 
 #endif

@@ -46,7 +46,28 @@ ParserResult parser_parse(Parser* parser, Command** cmd) {
     return PARSER_INCOMPLETE;
   }
 
-  char* cmd_name = strtok(parser->data, " \t\r\n");
+  ParserResult next_res = parser_parse_next(parser);
+
+  if (!constructed_string) {
+    printf("no constructed string\n");
+  } else {
+    printf("cmd_name parser_parse_next size %d -> %.*s\n", (int)count,
+           (int)count, constructed_string);
+  }
+
+  switch (next_res) {
+  case PARSER_INCOMPLETE:
+  case PARSER_INVALID:
+  case PARSER_NOMEM:
+    return next_res;
+  case PARSER_WHITESPACE:
+  case PARSER_OK:
+    break;
+  }
+
+  char* cmd_name = malloc(count + 1);
+  memcpy(cmd_name, constructed_string, count);
+  cmd_name[count] = '\0';
 
   if (!cmd_name) {
     cmd_name = "help";
@@ -56,6 +77,7 @@ ParserResult parser_parse(Parser* parser, Command** cmd) {
 
   if (!*cmd) {
     parser->len = 0;
+    printf("found no function\n");
     return PARSER_INVALID;
   }
 
@@ -76,7 +98,6 @@ ParserResult parser_parse(Parser* parser, Command** cmd) {
       parser->len = 0;
       return argument_parse;
     case PARSER_WHITESPACE:
-      continue;
     case PARSER_OK:
       continue;
     }
@@ -90,7 +111,8 @@ ParserResult parser_parse(Parser* parser, Command** cmd) {
 ParserResult parser_parse_argument(Parser* parser, Argument* arg) {
   (void)parser;
 
-  ParserResult next_res = parser_parse_next(parser, 0);
+  count = 0;
+  ParserResult next_res = parser_parse_next(parser);
 
   switch (next_res) {
   case PARSER_INCOMPLETE:
@@ -145,7 +167,7 @@ ParserResult parser_parse_argument(Parser* parser, Argument* arg) {
   return PARSER_OK;
 }
 
-ParserResult parser_parse_next(Parser* parser, size_t count) {
+ParserResult parser_parse_next(Parser* parser) {
   if (parser->len <= position) {
     return PARSER_INCOMPLETE;
   }
@@ -180,6 +202,7 @@ ParserResult parser_parse_next(Parser* parser, size_t count) {
 
   constructed_string[count] = read;
   position++;
+  count++;
 
-  return parser_parse_next(parser, count++);
+  return parser_parse_next(parser);
 }
