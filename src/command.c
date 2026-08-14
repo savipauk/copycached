@@ -67,9 +67,16 @@ CommandResult set_handle(Store* store, Argument* args, size_t arg_count,
   }
 
   var->key = strdup(key);
+  if (!var->key) {
+    return command_error("out of memory");
+  }
   var->flags = strtoul(flags, NULL, 0);
   var->size = strtoul(bytes, NULL, 0);
   var->data = malloc(var->size);
+  if (!var->data) {
+    variable_free(var);
+    return command_error("out of memory");
+  }
   memcpy(var->data, string_data, var->size);
 
   StoreResult result = store_set(store, *var);
@@ -80,6 +87,7 @@ CommandResult set_handle(Store* store, Argument* args, size_t arg_count,
   case STORE_UNDEFINED:
   case STORE_NOT_FOUND:
   case STORE_NOMEM:
+    variable_free(var);
     return command_error("something broke");
   }
 
@@ -107,6 +115,7 @@ CommandResult get_handle(Store* store, Argument* args, size_t arg_count,
   }
 
   printf("get key %s -> value %.*s\n", key, (int)var->size, (char*)var->data);
+  variable_free(var);
 
   return command_ok();
 }
@@ -121,7 +130,7 @@ static Command commands[] = {
      .args = set_args,
      .arg_count = sizeof(set_args) / sizeof(set_args[0]),
      .handle = set_handle,
-     .help = "set <key> <flags> <bytes size>\\r\\n<data block>\\r\n"},
+     .help = "set <key> <flags> <bytes size>\\r\\n<data block>\\r\\n"},
     {.name = "get",
      .args = get_args,
      .arg_count = sizeof(get_args) / sizeof(get_args[0]),

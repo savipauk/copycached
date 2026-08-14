@@ -44,7 +44,6 @@ int main() {
     Command* cmd;
     result = parser_parse(&parser, &cmd);
     if (switch_result(result) == -1) {
-      printf("parse error\n");
       continue;
     }
 
@@ -62,4 +61,3 @@ int main() {
 
   return 0;
 }
-

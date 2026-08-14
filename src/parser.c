@@ -48,6 +48,7 @@ ParserResult parser_parse(Parser* parser, Command** cmd) {
   *cmd = command_find(cmd_name);
 
   if (!*cmd) {
+    parser->len = 0;
     return PARSER_INVALID;
   }
 
