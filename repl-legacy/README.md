@@ -1,7 +1,5 @@
 # REPL legacy
 
-A small memchached-like REPL with primitive type support.
+The initial `copycached` implementation: a small memcached-like REPL supporting `int`, `float` and `string` typed values.
 
-This was the initial `copycached` implementation, a REPL program supporting `int`, `float` and `string` types.
-
-I'm keeping it here because I like it and think it's cool :D.
+The main project has since moved to opaque byte values and a protocl more alike the real memcached protocol (see the [top-level README](../README.md)). This version is kept as-is because I like it and think it's cool :D
