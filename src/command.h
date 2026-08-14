@@ -7,7 +7,6 @@
 typedef enum {
   ARGS_KEY,
   ARGS_FLAGS,
-  ARGS_EXPTIME,
   ARGS_LENGTH,
   ARGS_BYTES,
   ARGS_DATA,
@@ -30,7 +29,7 @@ typedef struct {
 } Argument;
 
 typedef CommandResult (*command_handle)(Store* store, Argument* args,
-                                        size_t arg_count, VariableEntry* var);
+                                        size_t arg_count, Variable* var);
 
 typedef struct {
   const char* name;

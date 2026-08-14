@@ -4,26 +4,26 @@
 
 void variable_free(Variable* v) {
   free(v->key);
-  if (v->type == TYPE_STRING) {
-    free(v->value.s);
-  }
+  free(v->data);
 }
 
 int variable_copy(const Variable* src, Variable* dst) {
-  *dst = *src;
+  *dst = (Variable){0};
 
   dst->key = strdup(src->key);
   if (!dst->key) {
     return -1;
   }
 
-  if (src->type == TYPE_STRING) {
-    dst->value.s = strdup(src->value.s);
-    if (!dst->value.s) {
-      free(dst->key);
-      return -1;
-    }
+  dst->data = malloc(src->size);
+  if (!dst->data) {
+    free(dst->key);
+    dst->key = NULL;
+    return -1;
   }
+
+  dst->size = src->size;
+  dst->flags = src->flags;
 
   return 0;
 }
@@ -147,26 +147,14 @@ Store store_init() {
   for (size_t i = 0; i < STORE_SIZE; ++i) {
     store.arr[i].state = SLOT_EMPTY;
     store.arr[i].var.key = NULL;
-    store.arr[i].var.type = TYPE_STRING;
-    store.arr[i].var.value.s = NULL;
+    store.arr[i].var.data = NULL;
+    store.arr[i].var.size = 0;
   }
 
   store.count = 0;
   store.deleted = 0;
 
   return store;
-}
-
-char* type_to_string(Type t) {
-  switch (t) {
-  case TYPE_INT:
-    return "TYPE_INT";
-  case TYPE_FLOAT:
-    return "TYPE_FLOAT";
-  case TYPE_STRING:
-    return "TYPE_STRING";
-  }
-  return "";
 }
 
 void store_cleanup(Store* store) {

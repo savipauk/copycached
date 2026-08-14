@@ -4,8 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #define STORE_SIZE 128
-
-typedef enum { TYPE_INT, TYPE_FLOAT, TYPE_STRING } Type;
+#define FLAGS_SIZE 32
 
 typedef enum {
   STORE_OK,
@@ -19,24 +18,12 @@ typedef enum { SLOT_EMPTY, SLOT_OCCUPIED, SLOT_DELETED } SlotState;
 
 typedef enum { FIND_FOUND, FIND_ABSENT, FIND_FULL } FindStatus;
 
-typedef union {
-  int i;
-  float f;
-  char* s;
-} Value;
-
-typedef struct {
-  char* key;
-  Type type;
-  Value value;
-} Variable;
-
-// TODO: the new stored variable
 typedef struct {
   char* key;
   uint8_t* data;
+  uint32_t flags;
   size_t size;
-} VariableEntry;
+} Variable;
 
 typedef struct {
   SlotState state;
@@ -71,7 +58,5 @@ StoreResult store_delete(Store* store, const char* key);
 Store store_init();
 
 void store_cleanup(Store* store);
-
-char* type_to_string(Type t);
 
 #endif

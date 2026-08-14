@@ -35,6 +35,7 @@ ParserResult parser_feed(Parser* parser, const char* data, size_t len) {
 
 ParserResult parser_parse(Parser* parser, Command** cmd) {
   if (!parser->data || parser->len == 0) {
+    printf("no data or len = 0\n");
     return PARSER_INCOMPLETE;
   }
 
@@ -55,6 +56,7 @@ ParserResult parser_parse(Parser* parser, Command** cmd) {
         parser_parse_argument(parser, &(*cmd)->args[i]);
 
     if (argument_parse != PARSER_OK) {
+      parser->len = 0;
       return argument_parse;
     }
   }
@@ -69,6 +71,7 @@ ParserResult parser_parse_argument(Parser* parser, Argument* arg) {
   char* arg_arg = strtok(NULL, " \t\r\n");
 
   if (!arg_arg) {
+    printf("no arg_arg\n");
     return PARSER_INCOMPLETE;
   }
 
@@ -80,9 +83,6 @@ ParserResult parser_parse_argument(Parser* parser, Argument* arg) {
     break;
   case ARGS_FLAGS:
     printf("ARGS_FLAGS: ");
-    break;
-  case ARGS_EXPTIME:
-    printf("ARGS_EXPTIME: ");
     break;
   case ARGS_LENGTH:
     printf("ARGS_LENGTH: ");
