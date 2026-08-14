@@ -52,6 +52,10 @@ ParserResult parser_parse(Parser* parser, Command** cmd) {
   }
 
   for (size_t i = 0; i < (*cmd)->arg_count; ++i) {
+    (*cmd)->args[i].arg = NULL;
+  }
+
+  for (size_t i = 0; i < (*cmd)->arg_count; ++i) {
     ParserResult argument_parse =
         parser_parse_argument(parser, &(*cmd)->args[i]);
 

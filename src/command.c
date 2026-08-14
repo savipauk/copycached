@@ -46,9 +46,9 @@ CommandResult set_handle(Store* store, Argument* args, size_t arg_count,
   const char* key = command_get_arg(args, arg_count, ARGS_KEY);
   const char* flags = command_get_arg(args, arg_count, ARGS_FLAGS);
   const char* bytes = command_get_arg(args, arg_count, ARGS_BYTES);
-  // const char* string_data = command_get_arg(args, arg_count, ARGS_DATA);
-  const uint8_t* string_data =
-      (const uint8_t*)command_get_arg(args, arg_count, ARGS_DATA);
+  const char* string_data = command_get_arg(args, arg_count, ARGS_DATA);
+  // const uint8_t* string_data =
+  //     (const uint8_t*)command_get_arg(args, arg_count, ARGS_DATA);
 
   if (!key) {
     return command_invalid("missing key");
@@ -106,7 +106,7 @@ CommandResult get_handle(Store* store, Argument* args, size_t arg_count,
     return command_error("something broke");
   }
 
-  printf("get key %s -> value %s\n", key, (char*)var->data);
+  printf("get key %s -> value %.*s\n", key, (int)var->size, (char*)var->data);
 
   return command_ok();
 }
@@ -121,7 +121,7 @@ static Command commands[] = {
      .args = set_args,
      .arg_count = sizeof(set_args) / sizeof(set_args[0]),
      .handle = set_handle,
-     .help = "set <key> <flags> <bytes size>\\r\\n<data block>\\r\\n"},
+     .help = "set <key> <flags> <bytes size>\\r\\n<data block>\\r\n"},
     {.name = "get",
      .args = get_args,
      .arg_count = sizeof(get_args) / sizeof(get_args[0]),

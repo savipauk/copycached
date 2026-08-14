@@ -22,6 +22,7 @@ int variable_copy(const Variable* src, Variable* dst) {
     return -1;
   }
 
+  memcpy(dst->data, src->data, src->size);
   dst->size = src->size;
   dst->flags = src->flags;
 
