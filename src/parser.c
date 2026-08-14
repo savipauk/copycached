@@ -71,8 +71,12 @@ ParserResult parser_parse_argument(Parser* parser, Argument* arg) {
   char* arg_arg = strtok(NULL, " \t\r\n");
 
   if (!arg_arg) {
-    printf("no arg_arg\n");
-    return PARSER_INCOMPLETE;
+    if (arg->type == ARGS_REQUIRED) {
+      printf("no arg_arg\n");
+      return PARSER_INCOMPLETE;
+    } else {
+      return PARSER_OK;
+    }
   }
 
   arg->arg = arg_arg;
