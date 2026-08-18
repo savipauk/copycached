@@ -157,7 +157,14 @@ CommandResult help_handle(Store* store, Argument* args, size_t arg_count,
     }
   } else {
     Command* c = command_find(cmd);
-    printf("%s\n", c->help);
+    if (!c) {
+      printf("no command found. listing all commands:\n");
+      for (size_t i = 0; i < sizeof(commands) / sizeof(commands[0]); ++i) {
+        printf("%s\n", commands[i].help);
+      }
+    } else {
+      printf("%s\n", c->help);
+    }
   }
 
   return command_ok();

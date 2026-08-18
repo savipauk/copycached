@@ -112,11 +112,17 @@ ParserResult parser_parse_argument(Parser* parser, Argument* arg) {
   ParserResult next_res = parser_parse_next(parser);
 
   switch (next_res) {
-  case PARSER_INCOMPLETE:
   case PARSER_INVALID:
   case PARSER_NOMEM:
-  case PARSER_WHITESPACE:
     return next_res;
+  case PARSER_INCOMPLETE:
+  case PARSER_WHITESPACE:
+    if (arg->type == ARGS_OPTIONAL) {
+      // absent optional arg is fine
+      arg->arg = NULL;
+      return PARSER_OK;
+    }
+    return PARSER_INCOMPLETE;
   case PARSER_OK:
     break;
   }
@@ -124,12 +130,7 @@ ParserResult parser_parse_argument(Parser* parser, Argument* arg) {
   char* arg_arg = strdup(parser->constructed_string);
 
   if (!arg_arg) {
-    if (arg->type == ARGS_REQUIRED) {
-      printf("missing required argument: %s\n", arg->arg);
-      return PARSER_INCOMPLETE;
-    } else {
-      return PARSER_OK;
-    }
+    return PARSER_NOMEM;
   }
 
   arg->arg = arg_arg;
@@ -167,7 +168,7 @@ ParserResult parser_parse_next(Parser* parser) {
   case '\n':
     parser->position++;
     if (parser->count == 0) {
-      return PARSER_WHITESPACE;
+      return parser_parse_next(parser);
     }
     parser->constructed_string[parser->count] = '\0';
     return PARSER_OK;
