@@ -56,6 +56,11 @@ int main() {
     if (cmd_result.type != COMMAND_OK) {
       printf("%s\n", cmd_result.err);
     }
+
+    for (size_t i = 0; i < cmd->arg_count; ++i) {
+      free((char*)cmd->args[i].arg);
+      cmd->args[i].arg = NULL;
+    }
   }
 
   store_cleanup(&store);

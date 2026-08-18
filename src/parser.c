@@ -5,9 +5,9 @@
 
 /*
 expect:
-set <key> <flags> <bytes size> <data block>\r\n
+set <key> <flags> <bytes size> <data block>\n
 → STORED
-read bytes-size from data block and expect \r\n
+read bytes-size from data block and expect \n
 */
 
 ParserResult parser_feed(Parser* parser, const char* data, size_t len) {
@@ -41,6 +41,9 @@ ParserResult parser_feed(Parser* parser, const char* data, size_t len) {
 }
 
 ParserResult parser_parse(Parser* parser, Command** cmd) {
+  parser->position = 0;
+  parser->count = 0;
+  
   if (!parser->data || parser->len == 0) {
     printf("no data or len = 0\n");
     return PARSER_INCOMPLETE;
@@ -48,11 +51,11 @@ ParserResult parser_parse(Parser* parser, Command** cmd) {
 
   ParserResult next_res = parser_parse_next(parser);
 
-  if (!constructed_string) {
+  if (!parser->constructed_string) {
     printf("no constructed string\n");
   } else {
-    printf("cmd_name parser_parse_next size %d -> %.*s\n", (int)count,
-           (int)count, constructed_string);
+    printf("cmd_name parser_parse_next size %d -> %.*s\n", (int)parser->count,
+           (int)parser->count, parser->constructed_string);
   }
 
   switch (next_res) {
@@ -65,15 +68,12 @@ ParserResult parser_parse(Parser* parser, Command** cmd) {
     break;
   }
 
-  char* cmd_name = malloc(count + 1);
-  memcpy(cmd_name, constructed_string, count);
-  cmd_name[count] = '\0';
-
-  if (!cmd_name) {
-    cmd_name = "help";
-  }
+  char* cmd_name = malloc(parser->count + 1);
+  memcpy(cmd_name, parser->constructed_string, parser->count);
+  cmd_name[parser->count] = '\0';
 
   *cmd = command_find(cmd_name);
+  free(cmd_name);
 
   if (!*cmd) {
     parser->len = 0;
@@ -84,8 +84,6 @@ ParserResult parser_parse(Parser* parser, Command** cmd) {
   for (size_t i = 0; i < (*cmd)->arg_count; ++i) {
     (*cmd)->args[i].arg = NULL;
   }
-
-  position = strlen((*cmd)->name) + 1;
 
   for (size_t i = 0; i < (*cmd)->arg_count; ++i) {
     ParserResult argument_parse =
@@ -109,9 +107,7 @@ ParserResult parser_parse(Parser* parser, Command** cmd) {
 }
 
 ParserResult parser_parse_argument(Parser* parser, Argument* arg) {
-  (void)parser;
-
-  count = 0;
+  parser->count = 0;
   ParserResult next_res = parser_parse_next(parser);
 
   switch (next_res) {
@@ -124,9 +120,9 @@ ParserResult parser_parse_argument(Parser* parser, Argument* arg) {
     break;
   }
 
-  printf("parser_parse_next -> %s\n", constructed_string);
+  printf("parser_parse_next -> %s\n", parser->constructed_string);
 
-  char* arg_arg = constructed_string;
+  char* arg_arg = strdup(parser->constructed_string);
 
   if (!arg_arg) {
     if (arg->type == ARGS_REQUIRED) {
@@ -168,41 +164,45 @@ ParserResult parser_parse_argument(Parser* parser, Argument* arg) {
 }
 
 ParserResult parser_parse_next(Parser* parser) {
-  if (parser->len <= position) {
+  if (parser->len <= parser->position) {
     return PARSER_INCOMPLETE;
   }
 
-  char read = parser->data[position];
-  printf("read char %d at pos %zu\n", read, position);
+  char read = parser->data[parser->position];
+  printf("read char %d at pos %zu\n", read, parser->position);
 
   switch (read) {
   case ' ':
   case '\t':
-  case '\r':
+  case '\n':
     printf("encountered whitespace\n");
-    position++;
-    return PARSER_WHITESPACE;
+    parser->position++;
+    if (parser->count == 0) {
+      return PARSER_WHITESPACE;
+    }
+    parser->constructed_string[parser->count] = '\0';
+    return PARSER_OK;
   default:
     break;
   }
 
-  if (!constructed_string) {
-    constructed_string = malloc(1);
-    if (!constructed_string) {
+  if (!parser->constructed_string) {
+    parser->constructed_string = malloc(2);
+    if (!parser->constructed_string) {
       return PARSER_NOMEM;
     }
   } else {
-    char* tmp = realloc(constructed_string, count + 1);
+    char* tmp = realloc(parser->constructed_string, parser->count + 2);
     if (!tmp) {
       return PARSER_NOMEM;
     }
 
-    constructed_string = tmp;
+    parser->constructed_string = tmp;
   }
 
-  constructed_string[count] = read;
-  position++;
-  count++;
+  parser->constructed_string[parser->count] = read;
+  parser->position++;
+  parser->count++;
 
   return parser_parse_next(parser);
 }

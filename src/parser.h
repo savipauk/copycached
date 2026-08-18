@@ -19,6 +19,10 @@ typedef struct {
   char* data;
   size_t len;
   size_t capacity;
+
+  char* constructed_string;
+  size_t count;
+  size_t position;
 } Parser;
 
 ParserResult parser_feed(Parser* parser, const char* data, size_t len);
@@ -28,9 +32,5 @@ ParserResult parser_parse(Parser* parser, Command** cmd);
 ParserResult parser_parse_argument(Parser* parser, Argument* arg);
 
 ParserResult parser_parse_next(Parser* parser);
-
-static char* constructed_string = NULL;
-static size_t count = 0;
-static size_t position = 0;
 
 #endif
