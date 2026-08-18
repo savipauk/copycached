@@ -53,9 +53,6 @@ ParserResult parser_parse(Parser* parser, Command** cmd) {
 
   if (!parser->constructed_string) {
     printf("no constructed string\n");
-  } else {
-    printf("cmd_name parser_parse_next size %d -> %.*s\n", (int)parser->count,
-           (int)parser->count, parser->constructed_string);
   }
 
   switch (next_res) {
@@ -124,13 +121,11 @@ ParserResult parser_parse_argument(Parser* parser, Argument* arg) {
     break;
   }
 
-  printf("parser_parse_next -> %s\n", parser->constructed_string);
-
   char* arg_arg = strdup(parser->constructed_string);
 
   if (!arg_arg) {
     if (arg->type == ARGS_REQUIRED) {
-      printf("no arg_arg\n");
+      printf("missing required argument: %s\n", arg->arg);
       return PARSER_INCOMPLETE;
     } else {
       return PARSER_OK;
@@ -141,28 +136,20 @@ ParserResult parser_parse_argument(Parser* parser, Argument* arg) {
 
   switch (arg->name) {
   case ARGS_KEY:
-    printf("ARGS_KEY: ");
     break;
   case ARGS_FLAGS:
-    printf("ARGS_FLAGS: ");
     break;
   case ARGS_LENGTH:
-    printf("ARGS_LENGTH: ");
     break;
   case ARGS_BYTES:
-    printf("ARGS_BYTES: ");
     break;
   case ARGS_DATA:
-    printf("ARGS_DATA: ");
     break;
   case ARGS_CMD:
-    printf("ARGS_CMD: ");
     break;
   default:
     return PARSER_INVALID;
   }
-
-  printf("%s\n", arg_arg);
 
   return PARSER_OK;
 }
@@ -173,13 +160,11 @@ ParserResult parser_parse_next(Parser* parser) {
   }
 
   char read = parser->data[parser->position];
-  printf("read char %d at pos %zu\n", read, parser->position);
 
   switch (read) {
   case ' ':
   case '\t':
   case '\n':
-    printf("encountered whitespace\n");
     parser->position++;
     if (parser->count == 0) {
       return PARSER_WHITESPACE;

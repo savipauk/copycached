@@ -37,7 +37,6 @@ CommandResult help_handle(Store* store, Argument* args, size_t arg_count,
 
 CommandResult set_handle(Store* store, Argument* args, size_t arg_count,
                          Variable* var) {
-  printf("set handle\n");
   const char* key = command_get_arg(args, arg_count, ARGS_KEY);
   const char* flags = command_get_arg(args, arg_count, ARGS_FLAGS);
   const char* bytes = command_get_arg(args, arg_count, ARGS_BYTES);
@@ -85,12 +84,13 @@ CommandResult set_handle(Store* store, Argument* args, size_t arg_count,
     return command_error("something broke");
   }
 
+  printf("SET: %s -> %.*s\n", var->key, (int)var->size, (char*)var->data);
+
   return command_ok();
 }
 
 CommandResult get_handle(Store* store, Argument* args, size_t arg_count,
                          Variable* var) {
-  printf("get handle\n");
   const char* key = command_get_arg(args, arg_count, ARGS_KEY);
 
   if (!key) {
@@ -101,14 +101,17 @@ CommandResult get_handle(Store* store, Argument* args, size_t arg_count,
   switch (result) {
   case STORE_OK:
     break;
-  case STORE_FULL:
-  case STORE_UNDEFINED:
   case STORE_NOT_FOUND:
+    return command_error("key not found");
   case STORE_NOMEM:
-    return command_error("something broke");
+    return command_error("out of memory");
+  case STORE_FULL:
+    return command_error("store full during get, big problem; undefined error");
+  case STORE_UNDEFINED:
+    return command_error("undefined error");
   }
 
-  printf("get key %s -> value %.*s\n", key, (int)var->size, (char*)var->data);
+  printf("GET: %s -> %.*s\n", key, (int)var->size, (char*)var->data);
   variable_free(var);
 
   return command_ok();
