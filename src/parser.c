@@ -43,7 +43,7 @@ ParserResult parser_feed(Parser* parser, const char* data, size_t len) {
 ParserResult parser_parse(Parser* parser, Command** cmd) {
   parser->position = 0;
   parser->count = 0;
-  
+
   if (!parser->data || parser->len == 0) {
     printf("no data or len = 0\n");
     return PARSER_INCOMPLETE;
@@ -94,6 +94,10 @@ ParserResult parser_parse(Parser* parser, Command** cmd) {
     case PARSER_INVALID:
     case PARSER_NOMEM:
       parser->len = 0;
+      for (size_t i = 0; i < (*cmd)->arg_count; ++i) {
+        free((char*)(*cmd)->args[i].arg);
+        (*cmd)->args[i].arg = NULL;
+      }
       return argument_parse;
     case PARSER_WHITESPACE:
     case PARSER_OK:
