@@ -63,8 +63,13 @@ CommandResult set_handle(Store* store, Argument* args, size_t arg_count,
   if (!var->key) {
     return command_error("out of memory");
   }
+
   var->flags = strtoul(flags, NULL, 0);
   var->size = strtoul(bytes, NULL, 0);
+
+  if (strlen((const char*)string_data) < var->size) {
+    var->size = strlen((const char*)string_data);
+  }
   var->data = malloc(var->size);
   if (!var->data) {
     variable_free(var);
