@@ -66,16 +66,13 @@ CommandResult set_handle(Store* store, Argument* args, size_t arg_count,
 
   var->flags = strtoul(flags, NULL, 0);
   var->size = strtoul(bytes, NULL, 0);
-
-  if (strlen((const char*)string_data) < var->size) {
-    var->size = strlen((const char*)string_data);
-  }
-  var->data = malloc(var->size);
+  var->data = calloc(var->size, 1);
   if (!var->data) {
     variable_free(var);
     return command_error("out of memory");
   }
-  memcpy(var->data, string_data, var->size);
+  size_t len = strlen((const char*)string_data);
+  memcpy(var->data, string_data, len);
 
   StoreResult result = store_set(store, *var);
   switch (result) {
