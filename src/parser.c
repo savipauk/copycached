@@ -10,6 +10,12 @@ set <key> <flags> <bytes size> <data block>\n
 read bytes-size from data block and expect \n
 */
 
+Parser parser_init() {
+  Parser parser = {0};
+  parser.mode = PARSER_REPL;
+  return parser;
+}
+
 ParserResult parser_feed(Parser* parser, const char* data, size_t len) {
   if (len == 0) {
     return PARSER_INVALID;

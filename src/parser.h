@@ -25,6 +25,8 @@ typedef struct {
   size_t position;
 } Parser;
 
+Parser parser_init();
+
 ParserResult parser_feed(Parser* parser, const char* data, size_t len);
 
 ParserResult parser_parse(Parser* parser, Command** cmd);

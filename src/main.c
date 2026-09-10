@@ -34,8 +34,7 @@ int main() {
   ssize_t nread;
 
   Store store = store_init();
-  Parser parser = {0};
-  parser.mode = PARSER_REPL;
+  Parser parser = parser_init();
 
   while ((nread = getline(&line, &cap, stdin)) != -1) {
     ParserResult result;
