@@ -9,9 +9,10 @@ copycached speaks a text protocol similar to memcached (`set`, `get`, ...) over 
 It is built as a toy recreational project and designed to be used as a chat backend for small game lobbies with very little chat-specifc code in the server. 
 
 ## Build & run
-
-    make
-    ./copycached
+```
+make
+./copycached
+```
 
 Currently runs as a REPL — type `help` to list commands.
 

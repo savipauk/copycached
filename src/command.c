@@ -72,6 +72,9 @@ CommandResult set_handle(Store* store, Argument* args, size_t arg_count,
     return command_error("out of memory");
   }
   size_t len = strlen((const char*)string_data);
+  if (len > var->size) {
+    return command_invalid("data length > bytes");
+  }
   memcpy(var->data, string_data, len);
 
   StoreResult result = store_set(store, *var);
